@@ -1,12 +1,12 @@
-
+.env
 
 # Logs
 *.log
 npm-debug.log*
 
 # Environment variables
-.env
-src/.env
+
+
 # Node modules
 node_modules/
 
