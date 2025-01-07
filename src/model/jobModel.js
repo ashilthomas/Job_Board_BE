@@ -51,6 +51,10 @@ const jobSchema = new mongoose.Schema({
         type: Date, 
         default: Date.now 
     }, // When the job was last updated
+    imageUrl:{
+        type:String,
+
+    }
 });
 
 const JobModel = mongoose.model('Job', jobSchema);
