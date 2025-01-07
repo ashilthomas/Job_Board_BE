@@ -8,6 +8,7 @@ const applicationSchema = new mongoose.Schema({
         enum: ['pending', 'reviewed', 'accepted', 'rejected'],
         default: 'pending',
     },
+    resume: { type: String, default: null }, 
     
     appliedAt: { type: Date, default: Date.now },
 });

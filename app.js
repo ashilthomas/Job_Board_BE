@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser"
 import jobRoute from "./src/routes/jobRoute.js"
 
 import path from "path"
+import applicationRoute from "./src/routes/applicationRoute.js"
 
 
 const app = express()
@@ -30,6 +31,7 @@ connectDb()
 
 app.use('/api/v1/auth',userRoute)
 app.use('/api/v1',jobRoute)
+app.use('/api/v1/application',applicationRoute)
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

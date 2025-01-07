@@ -1,11 +1,12 @@
-import ApplicationModel from "../model/applicationModel";
-import JobModel from "../model/jobModel";
+import ApplicationModel from "../model/applicationModel.js";
+import JobModel from "../model/jobModel.js";
 
 
 // POST /jobs/:id/apply - Apply for a job
 export const applyForJob = async (req, res) => {
     const { id } = req.params; // Job ID
-    const { userId } = req.user; // Extracted from JWT middleware
+    const userId  = req.user.id; // Extracted from JWT middleware
+    const resumePath = req.file.path;
 
     try {
         // Check if the job exists
@@ -18,6 +19,7 @@ export const applyForJob = async (req, res) => {
         const existingApplication = await ApplicationModel.findOne({
             job: id,
             applicant: userId,
+            resume:resumePath
         });
 
         if (existingApplication) {
@@ -28,6 +30,7 @@ export const applyForJob = async (req, res) => {
         const application = new ApplicationModel({
             job: id,
             applicant: userId,
+            resume:resumePath
            
         });
 
