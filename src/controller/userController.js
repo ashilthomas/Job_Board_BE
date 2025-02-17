@@ -10,6 +10,8 @@ import { PDFDocument } from 'pdf-lib';
 
 
 export const registerUser = async (req, res) => {
+    console.log("hitting");
+    
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -103,6 +105,8 @@ export const updateEmployerProfile = async (req, res) => {
             success:true,
             message: 'Profile updated successfully', user: updatedUser });
     } catch (error) {
+        console.log(error);
+        
         res.status(500).json({success:false,
              message: 'Error updating profile', error });
     }

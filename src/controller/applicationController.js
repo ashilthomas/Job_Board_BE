@@ -2,6 +2,7 @@ import ApplicationModel from "../model/applicationModel.js";
 import JobModel from "../model/jobModel.js";
 import { PdfReader } from "pdfreader";
 import UserModel from "../model/userModel.js";
+import path from 'path'
 
 // POST /jobs/:id/apply - Apply for a job
 // export const applyForJob = async (req, res) => {
@@ -58,11 +59,15 @@ import UserModel from "../model/userModel.js";
 export const applyForJob = async (req, res) => {
     const { id } = req.params; // Job ID
     const userId = req.user.id; // Extracted from JWT middleware
-    const resumePath = req.file?.path; // Resume file path from multer
+    let resumePath = req.file?.path; // Resume file path from multer
+   
 
     if (!resumePath) {
         return res.status(400).json({ success: false, message: 'Resume file is required.' });
     }
+
+    resumePath = resumePath.replace(/\\/g, "/"); 
+    const resumeFilename = path.basename(resumePath);
 
     try {
         // Step 1: Check if the job exists
@@ -87,7 +92,7 @@ export const applyForJob = async (req, res) => {
                 $set: {
                     skills: extractedSkills,
                     experience: extractedExperience,
-                    resume: resumePath,
+                    resume: resumeFilename,
                 },
             },
             { new: true }
@@ -97,7 +102,7 @@ export const applyForJob = async (req, res) => {
         const application = new ApplicationModel({
             job: id,
             applicant: userId,
-            resume: resumePath,
+            resume: resumeFilename,
         });
 
         await application.save();
@@ -176,4 +181,117 @@ const parseResume = async (resumePath) => {
             }
         });
     });
+};
+
+export const myAppliedJobs =async(req,res)=>{
+    const {id} = req.user
+    try {
+        const myJobs = await ApplicationModel.find({ applicant:id}).populate("job").populate({
+            path: 'job',
+            populate: {
+                path: 'postedBy', // This will populate the employer details inside the job
+                model: 'User' 
+            }
+        })
+        if(!myJobs || myJobs.length==0){
+            return res.json({
+                success:false,
+                message:"No job applied"
+            })
+        }
+        res.json({
+            success:true,
+            myJobs
+        })
+    } catch (error) {
+        console.log(error);
+        
+        res.status(500).json({ success: false, message: 'Failed to apply for the job.', error });
+    }
+}
+
+export const getApplicantsForJob = async (req, res) => {
+    const { employerId } = req.user; // Get employer ID from authenticated user
+    const { jobId } = req.params; // Get job ID from request parameters
+
+    try {
+        // Find the job and ensure it belongs to the employer
+        const job = await JobModel.findOne({ _id: jobId, employer: employerId });
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job not found or does not belong to you"
+            });
+        }
+
+        // Fetch applications for the specific job
+        const applications = await ApplicationModel.find({ job: jobId })
+            .populate('applicant', 'name email'); // Populate applicant details
+
+        // Extract applicant details along with application status
+        const applicants = applications.map(app => ({
+            name: app.applicant.name,
+            email: app.applicant.email,
+            status: app.status, // Include application status
+        }));
+
+        return res.status(200).json({
+            success: true,
+            job: {
+                id: job._id,
+                title: job.title
+            },
+            applicants
+        });
+    } catch (error) {
+        console.error("Error fetching applicants:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+
+export const updateApplicationStatus = async (req, res) => {
+    const { applicationId } = req.params; // Get application ID from URL
+    const { status } = req.body; // New status from request body
+    const { employerId } = req.user; // Get employer ID from authenticated user
+
+    try {
+        // Find the application and ensure the employer owns the job
+        const application = await ApplicationModel.findById(applicationId).populate('job');
+
+        if (!application) {
+            return res.status(404).json({
+                success: false,
+                message: "Application not found"
+            });
+        }
+
+        // Check if the employer owns the job
+        if (application.job.employer.toString() !== employerId) {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized: You don't own this job"
+            });
+        }
+
+        // Update application status
+        application.status = status;
+        await application.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Application status updated successfully",
+            application
+        });
+
+    } catch (error) {
+        console.error("Error updating application status:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
 };

@@ -5,19 +5,23 @@ import userRoute from "./src/routes/userRoute.js"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 import jobRoute from "./src/routes/jobRoute.js"
-
+import { fileURLToPath } from "url";
 import path from "path"
 import applicationRoute from "./src/routes/applicationRoute.js"
-
-
 const app = express()
 const PORT = 4000
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-// Now you can use __dirname like you would in CommonJS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
-app.use('src/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+// app.use('src/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "src/uploads")));
+
+
+
 
 app.use(express.json())
 app.use(cookieParser())

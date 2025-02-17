@@ -16,8 +16,8 @@ const jobSchema = new mongoose.Schema({
         required: true 
     }, // Job location (e.g., "San Francisco, CA")
     salary: { 
-        min: { type: Number, required: true }, 
-        max: { type: Number, required: true } 
+        min: { type: Number,  }, 
+        max: { type: Number,  } 
     }, // Salary range (e.g., { min: 50000, max: 100000 })
     skillsRequired: { 
         type: [String], 
@@ -36,7 +36,7 @@ const jobSchema = new mongoose.Schema({
     postedBy: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User', 
-        required: true 
+        // required: true 
     }, // The employer who posted the job
     status: { 
         type: String, 
@@ -51,7 +51,7 @@ const jobSchema = new mongoose.Schema({
         type: Date, 
         default: Date.now 
     }, // When the job was last updated
-    imageUrl:{
+    image:{
         type:String,
 
     }

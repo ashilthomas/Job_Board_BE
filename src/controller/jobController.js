@@ -1,14 +1,30 @@
 import mongoose from "mongoose";
 import JobModel from "../model/jobModel.js";
 import UserModel from "../model/userModel.js";
+import uploadToCloudinary from "../config/cloudinaryServices.js";
+import e from "cors";
 
 
 // POST /jobs - Create a new job
 export const createJob = async (req, res) => {
     const userId = req.user.id
-    const { title, description,  location, salary,skillsRequired, experienceLevel, jobType } = req.body;
+    console.log(req.body);
+    
+    const {
+        title,
+        description,
+        location,
+        salary: salaryString,
+        skillsRequired,
+        experienceLevel,
+        jobType,
 
-  
+    } = req.body;
+
+    // Parse the stringified salary into an object
+    const salary = JSON.parse(salaryString);
+    const filePath = req.file.path
+    const result = await uploadToCloudinary(filePath);
 
     try {
         // Create a new job document
@@ -16,11 +32,12 @@ export const createJob = async (req, res) => {
             title,
             description,
             location,
-            salary,
+            salary, 
             skillsRequired,
             experienceLevel,
             jobType,
-            postedBy: userId, // Reference to the employer
+            postedBy: userId,
+            image:result.url // Reference to the employer
         });
 
         // Save the job to the database
@@ -32,6 +49,8 @@ export const createJob = async (req, res) => {
             job: savedJob,
         });
     } catch (error) {
+        console.log(error);
+        
         res.status(500).json({
             success:false,
      message: 'Error creating job', error });
@@ -40,6 +59,8 @@ export const createJob = async (req, res) => {
 
 export const getJobDetails= async (req, res) => {
     const id = req.params.id;
+    console.log(id);
+    
 
     // Validate if the id is a valid MongoDB ObjectId
     // if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -51,7 +72,7 @@ export const getJobDetails= async (req, res) => {
 
     try {
         // Fetch the job from the database
-        const job = await JobModel.findById(id);
+        const job = await JobModel.findById(id).populate('postedBy');
 
         // If the job is not found, return a 404 error
         if (!job) {
@@ -140,15 +161,17 @@ export const updateJob = async (req, res) => {
 // search functionalilty
 
 export const searchJobs = async (req, res) => {
+    console.log("hitting");
+    
     const {  page = 1, limit = 10 } = req.query;
     
     const { keyword } = req.query;
+    console.log(keyword);
+    
 
     try {
         // Validate that a keyword is provided
-        if (!keyword) {
-            return res.status(400).json({ success:false, message: 'Please provide a search keyword.' });
-        }
+      
 
         // Build a search query
         const query = {
@@ -240,5 +263,26 @@ export const recommendJobs = async (req, res) => {
     } catch (error) {
         console.error('Error in recommendJobs:', error);
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const employerJob = async (req, res) => {
+    const { id } = req.user;
+    
+    try {
+        const empJobs = await JobModel.find({ postedBy: id });
+
+        // Always return an array, even if it's empty
+        return res.json({
+            success: true,
+            empJobs: empJobs.length > 0 ? empJobs : []
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
     }
 };
