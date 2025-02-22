@@ -210,88 +210,84 @@ export const myAppliedJobs =async(req,res)=>{
     }
 }
 
+ // Import Application model
+
 export const getApplicantsForJob = async (req, res) => {
-    const { employerId } = req.user; // Get employer ID from authenticated user
-    const { jobId } = req.params; // Get job ID from request parameters
+    console.log("Endpoint hit");
+
+    const { id } = req.user; // Employer ID from authenticated user
+
+
+    const { jobId } = req.params; // Job ID from request parameters
+
 
     try {
         // Find the job and ensure it belongs to the employer
-        const job = await JobModel.findOne({ _id: jobId, employer: employerId });
+        const job = await JobModel.findOne({ _id: jobId, postedBy: id });
+
         if (!job) {
             return res.status(404).json({
                 success: false,
-                message: "Job not found or does not belong to you"
+                message: "Job not found or does not belong to you",
             });
         }
 
         // Fetch applications for the specific job
         const applications = await ApplicationModel.find({ job: jobId })
-            .populate('applicant', 'name email'); // Populate applicant details
+            .populate("applicant", "name email"); // Populate applicant details
 
         // Extract applicant details along with application status
-        const applicants = applications.map(app => ({
-            name: app.applicant.name,
-            email: app.applicant.email,
+        const applicants = applications.map((app) => ({
+            id:app._id,
+            name: app.applicant?.name || "Unknown",
+            email: app.applicant?.email || "Unknown",
             status: app.status, // Include application status
+            resume: app.resume, // Include resume field if needed
         }));
 
         return res.status(200).json({
             success: true,
             job: {
                 id: job._id,
-                title: job.title
+                title: job.title,
             },
-            applicants
+            applicants,
         });
     } catch (error) {
         console.error("Error fetching applicants:", error);
         return res.status(500).json({
             success: false,
-            message: "Internal server error"
+            message: "Internal server error",
         });
     }
 };
 
 
 export const updateApplicationStatus = async (req, res) => {
-    const { applicationId } = req.params; // Get application ID from URL
-    const { status } = req.body; // New status from request body
-    const { employerId } = req.user; // Get employer ID from authenticated user
-
     try {
-        // Find the application and ensure the employer owns the job
-        const application = await ApplicationModel.findById(applicationId).populate('job');
+        const { applicationId } = req.params;
+        const { status } = req.body;
 
-        if (!application) {
-            return res.status(404).json({
-                success: false,
-                message: "Application not found"
-            });
+        console.log("sdjflsjalda",applicationId);
+        
+
+        if (!["pending", "reviewed", "accepted", "rejected"].includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status value" });
         }
 
-        // Check if the employer owns the job
-        if (application.job.employer.toString() !== employerId) {
-            return res.status(403).json({
-                success: false,
-                message: "Unauthorized: You don't own this job"
-            });
+        const updatedApplication = await ApplicationModel.findByIdAndUpdate(
+            applicationId,
+            { status },
+            { new: true }
+        );
+
+        if (!updatedApplication) {
+            return res.status(404).json({ success: false, message: "Application not found" });
         }
 
-        // Update application status
-        application.status = status;
-        await application.save();
-
-        return res.status(200).json({
-            success: true,
-            message: "Application status updated successfully",
-            application
-        });
-
+        return res.status(200).json({ success: true, message: "Status updated successfully" });
     } catch (error) {
         console.error("Error updating application status:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };

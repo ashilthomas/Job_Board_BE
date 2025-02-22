@@ -207,3 +207,42 @@ export const uploadResume = async (req, res) => {
         }
 };
 
+export const checkuser = async(req,res)=>{
+    console.log("hitt checkuser");
+    
+ 
+    const userId = req.user.id
+
+  
+  
+    try {
+      const user = await UserModel.findOne({_id:userId})
+      if(!user){
+        return res.json({ message: "authentication failed", success: false });
+      }
+      res.json(({
+        success:true,
+      
+      }))
+     } catch (error) {
+      console.log(error);
+      res.json({ message: "authentication failed", success: false })
+     }
+  }
+
+
+  export const checkEmployer = async (req, res) => {
+    try {
+      const employer = await UserModel.findById(req.user.id);
+  
+      if (!employer || employer.role !== "employer") {
+        return res.status(403).json({ success: false, message: "Access denied. Employers only." });
+      }
+  
+      res.json({ success: true, message: "Employer authenticated successfully." });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: "Server error." });
+    }
+  };
+  

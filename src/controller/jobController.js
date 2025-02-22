@@ -3,6 +3,7 @@ import JobModel from "../model/jobModel.js";
 import UserModel from "../model/userModel.js";
 import uploadToCloudinary from "../config/cloudinaryServices.js";
 import e from "cors";
+import ApplicationModel from "../model/applicationModel.js";
 
 
 // POST /jobs - Create a new job
@@ -283,6 +284,79 @@ export const employerJob = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Server error"
+        });
+    }
+};
+export const updateJobStatus =async(req,res)=>{
+    const { jobId } = req.params;
+    const { status } = req.body;
+
+    console.log(jobId);
+    
+
+    
+    if (!["Open", "Closed"].includes(status)) {
+        return res.status(400).json({ success: false, message: "Invalid status value" });
+    }
+
+    try {
+
+        const updatedJob = await JobModel.findByIdAndUpdate(
+            jobId,
+            { status },
+            { new: true }
+        );
+        if (!updatedJob) {
+            return res.status(404).json({ success: false, message: "job not found" });
+        }
+
+        return res.status(200).json({ success: true, message: "Status updated successfully" });
+        
+    
+    } catch (error) {
+
+        console.error("Error updating application status:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+        
+    }
+
+}
+
+
+
+export const deleteJob = async (req, res) => {
+    console.log("delte hitting");
+    
+    try {
+        const { jobId } = req.params;
+      // Employer ID from authenticated user
+
+        // Find the job and ensure it belongs to the employer
+        const job = await JobModel.findOne({ _id: jobId,});
+
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job not found or does not belong to you",
+            });
+        }
+
+        // Delete applications related to this job
+        await ApplicationModel.deleteMany({ job: jobId });
+
+        // Delete the job
+        await JobModel.findByIdAndDelete(jobId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Job deleted successfully",
+        });
+
+    } catch (error) {
+        console.error("Error deleting job:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
         });
     }
 };
