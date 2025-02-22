@@ -1,6 +1,7 @@
 
 import jwt from "jsonwebtoken"
 import UserModel from "../model/userModel.js";
+import "dotenv/config";
 const JWT_SECRET = process.env.SKT || 'your_jwt_secret';
 
 // Middleware to authenticate employer

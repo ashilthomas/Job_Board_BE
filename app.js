@@ -1,5 +1,5 @@
 import express from "express"
-
+import "dotenv/config";
 import connectDb from "./src/config/db.js"
 import userRoute from "./src/routes/userRoute.js"
 import cors from "cors"
@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 import path from "path"
 import applicationRoute from "./src/routes/applicationRoute.js"
 const app = express()
-const PORT = 4000
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +38,6 @@ app.use('/api/v1',jobRoute)
 app.use('/api/v1/application',applicationRoute)
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${process.env.PORT}`);
 });
 
