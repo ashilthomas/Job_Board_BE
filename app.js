@@ -37,7 +37,7 @@ app.use('/api/v1/auth',userRoute)
 app.use('/api/v1',jobRoute)
 app.use('/api/v1/application',applicationRoute)
 
-app.listen(PORT, () => {
+app.listen(process.env.PORT, () => {
     console.log(`Server is running on http://localhost:${process.env.PORT}`);
 });
 
