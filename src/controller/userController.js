@@ -85,30 +85,53 @@ export const loginUser = async (req, res,next) => {
       });
     }
   };
-export const updateEmployerProfile = async (req, res) => {
-    const userId = req.user.id; // From JWT middleware
-    console.log(userId);
-    
-    const { companyName, companyDetails } = req.body;
-    console.log(req.body);
-    
-
+  export const updateEmployerProfile = async (req, res) => {
     try {
+        const userId = req.user.id; // Get user ID from JWT middleware
+   
+
+        const { companyName, companyDetails } = req.body;
+     
+
+        // Ensure required fields are provided
+        if (!companyName || !companyDetails) {
+            return res.status(400).json({
+                success: false,
+                message: "Company Name and Company Details are required."
+            });
+        }
+
+        // Update user details
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
-            { companyName, companyDetails,role:"employer" },
-            { new: true }
+            { companyName, companyDetails, role: "employer" },
+            { new: true } // Return updated document
         );
 
-        res.status(200).json({
-            
-            success:true,
-            message: 'Profile updated successfully', user: updatedUser });
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found."
+            });
+        }
+
+        console.log("Updated User:", updatedUser);
+
+        // Send success response
+        return res.status(200).json({
+            success: true,
+            message: "Profile updated successfully!",
+            user: updatedUser
+        });
+
     } catch (error) {
-        console.log(error);
+        console.error("Error updating profile:", error);
         
-        res.status(500).json({success:false,
-             message: 'Error updating profile', error });
+        return res.status(500).json({
+            success: false,
+            message: "Error updating profile.",
+            error: error.message
+        });
     }
 };
 
