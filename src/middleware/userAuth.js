@@ -4,8 +4,8 @@ import "dotenv/config";
 function authenticateUser(req, res, next) {
 
 
-  const token = req.cookies.token;
-  console.log("token",token);
+  const token = req.cookies.token ||  req.headers.authorization?.split(' ')[1];;
+
 
 //   const token = req.headers.authorization;
 

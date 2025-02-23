@@ -6,8 +6,8 @@ const JWT_SECRET = process.env.SKT || 'your_jwt_secret';
 
 // Middleware to authenticate employer
 const authenticateEmployer = async (req, res, next) => {
-    // const token = req.headers.authorization?.split(' ')[1];
-    const token = req.cookies.token;
+    
+    const token = req.cookies.token ||  req.headers.authorization?.split(' ')[1];;
     console.log(token);
     
 
