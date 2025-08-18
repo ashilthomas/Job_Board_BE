@@ -7,7 +7,7 @@ import authenticateEmployer from "../middleware/employerAuth.js"
 const jobRoute = express.Router()
 
 jobRoute.post("/job",upload.single("image"),authenticateUser,createJob)
-jobRoute.post("/job/:id",getJobDetails)
+jobRoute.get("/jobDetails/:jobId",getJobDetails)
 jobRoute.get("/job",getJobs)
 jobRoute.put("/job/:id",updateJob)
 jobRoute.get("/job/search",searchJobs)

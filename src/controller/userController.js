@@ -1,9 +1,9 @@
 import UserModel from "../model/userModel.js";
 import bcrypt from "bcrypt"
 import getToken from "../utils/generateToken.js";
-import fs from "fs";
+
 import { PdfReader } from "pdfreader";
-import { PDFDocument } from 'pdf-lib';
+
 
 
 
@@ -115,7 +115,7 @@ export const loginUser = async (req, res,next) => {
             });
         }
 
-        console.log("Updated User:", updatedUser);
+    
 
         // Send success response
         return res.status(200).json({
@@ -230,42 +230,24 @@ export const uploadResume = async (req, res) => {
         }
 };
 
-export const checkuser = async(req,res)=>{
-    console.log("hitt checkuser");
-    
- 
-    const userId = req.user.id
-
-  
-  
-    try {
-      const user = await UserModel.findOne({_id:userId})
-      if(!user){
-        return res.json({ message: "authentication failed", success: false });
-      }
-      res.json(({
-        success:true,
-      
-      }))
-     } catch (error) {
-      console.log(error);
-      res.json({ message: "authentication failed", success: false })
-     }
-  }
-
-
-  export const checkEmployer = async (req, res) => {
-    try {
-      const employer = await UserModel.findById(req.user.id);
-  
-      if (!employer || employer.role !== "employer") {
-        return res.status(403).json({ success: false, message: "Access denied. Employers only." });
-      }
-  
-      res.json({ success: true, message: "Employer authenticated successfully." });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: "Server error." });
+export const checkUser = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.user.id);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Authentication failed." });
     }
-  };
-  
+    res.json({ success: true, message: "User authenticated successfully." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+export const checkEmployer = (req, res) => {
+  // Employer validation already done in middleware
+  res.json({ success: true, message: "Employer authenticated successfully." });
+};
+
+export const checkAdmin = (req, res) => {
+  // Admin validation already done in middleware
+  res.json({ success: true, message: "Admin authenticated successfully." });
+};

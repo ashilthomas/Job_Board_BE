@@ -2,10 +2,9 @@
 import UserModel from "../model/userModel.js";
 import authenticateUser from "./userAuth.js";
 
-const authenticateEmployer = async (req, res, next) => {
-  // First validate token
+const authenticateAdmin = async (req, res, next) => {
   authenticateUser(req, res, async (err) => {
-    if (err) return; // authenticateUser already handled errors
+    if (err) return;
 
     try {
       const user = await UserModel.findById(req.user.id);
@@ -13,8 +12,8 @@ const authenticateEmployer = async (req, res, next) => {
         return res.status(404).json({ success: false, message: "User not found." });
       }
 
-      if (user.role !== "employer") {
-        return res.status(403).json({ success: false, message: "Access denied. Employers only." });
+      if (user.role !== "admin") {
+        return res.status(403).json({ success: false, message: "Access denied. Admins only." });
       }
 
       req.user = user;
@@ -25,4 +24,4 @@ const authenticateEmployer = async (req, res, next) => {
   });
 };
 
-export default authenticateEmployer;
+export default authenticateAdmin;

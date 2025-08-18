@@ -59,14 +59,13 @@ import path from 'path'
 export const applyForJob = async (req, res) => {
     const { id } = req.params; // Job ID
     const userId = req.user.id; // Extracted from JWT middleware
-    let resumePath = req.file?.path; // Resume file path from multer
-   
+    let resumePath = req.file?.path;
 
     if (!resumePath) {
         return res.status(400).json({ success: false, message: 'Resume file is required.' });
     }
 
-    resumePath = resumePath.replace(/\\/g, "/"); 
+    resumePath = resumePath.replace(/\\/g, "/");
     const resumeFilename = path.basename(resumePath);
 
     try {
@@ -85,7 +84,7 @@ export const applyForJob = async (req, res) => {
         // Step 3: Parse resume for skills and experience
         const { extractedSkills, extractedExperience } = await parseResume(resumePath);
 
-        // Step 4: Update the user's profile with parsed skills and experience
+        // Step 4: Update user's profile
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
             {
@@ -98,7 +97,7 @@ export const applyForJob = async (req, res) => {
             { new: true }
         );
 
-        // Step 5: Create a new job application
+        // Step 5: Create a new application
         const application = new ApplicationModel({
             job: id,
             applicant: userId,
@@ -118,68 +117,79 @@ export const applyForJob = async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to apply for the job.', error });
     }
 };
-
-const parseResume = async (resumePath) => {
-    let extractedSkills = new Set();
-    let extractedExperience = '';
-    let currentSection = null;
-    let buffer = []; // Buffer for fixing fragmented words
-
-    const finalizeParsedData = () => {
-        const mergedWords = mergeFragmentedWords(buffer);
-        mergedWords.forEach(word => extractedSkills.add(word));
-    };
-
-    const mergeFragmentedWords = (words) => {
-        const merged = [];
-        for (let i = 0; i < words.length; i++) {
-            const currentWord = words[i];
-            const nextWord = words[i + 1] || '';
-
-            // Merge if the current and next words are fragments (lowercase and uppercase checks)
-            if (currentWord.match(/^[A-Z]?$/) && nextWord.match(/^[a-z]/)) {
-                merged.push(currentWord + nextWord);
-                i++; // Skip the next word
-            } else {
-                merged.push(currentWord);
-            }
-        }
-        return merged;
-    };
-
+const parseResume = (resumePath) => {
     return new Promise((resolve, reject) => {
-        const reader = new PdfReader();
+        let extractedSkills = new Set();
+        let extractedExperience = '';
+        let currentSection = null;
+        let buffer = [];
 
-        reader.parseFileItems(resumePath, (err, item) => {
-            if (err) {
-                console.error('Error reading PDF:', err);
-                return reject('Failed to read the PDF');
+        const finalizeParsedData = () => {
+            const mergedWords = mergeFragmentedWords(buffer);
+            mergedWords.forEach(word => {
+                const cleanWord = word.replace(/[^a-zA-Z0-9+.#]/g, '');
+                if (cleanWord.length > 1) extractedSkills.add(cleanWord);
+            });
+            return {
+                extractedSkills: Array.from(extractedSkills),
+                extractedExperience: extractedExperience.trim(),
+            };
+        };
+
+        const mergeFragmentedWords = (words) => {
+            const merged = [];
+            for (let i = 0; i < words.length; i++) {
+                const currentWord = words[i];
+                const nextWord = words[i + 1] || '';
+
+                if (currentWord.match(/^[A-Z]?$/) && nextWord.match(/^[a-z]/)) {
+                    merged.push(currentWord + nextWord);
+                    i++;
+                } else {
+                    merged.push(currentWord);
+                }
             }
+            return merged;
+        };
 
-            if (!item) {
-                // End of PDF - Process the buffer
-                finalizeParsedData();
-                return resolve({
-                    extractedSkills: Array.from(extractedSkills),
-                    extractedExperience: extractedExperience.trim(),
-                });
-            }
-
-            if (item.text) {
-                if (item.text.match(/skills/i)) {
-                    currentSection = 'skills';
-                } else if (item.text.match(/experience/i)) {
-                    currentSection = 'experience';
+        try {
+            const reader = new PdfReader();
+            reader.parseFileItems(resumePath, (err, item) => {
+                if (err) {
+                    console.error("PDF parsing error:", err);
+                    return reject("Failed to read the PDF");
                 }
 
-                if (currentSection === 'skills' && !item.text.match(/skills/i)) {
-                    const words = item.text.split(/\s+/);
-                    words.forEach(word => buffer.push(word));
-                } else if (currentSection === 'experience' && !item.text.match(/experience/i)) {
-                    extractedExperience += item.text + ' ';
+                if (!item) {
+                    // End of file
+                    return resolve(finalizeParsedData());
                 }
-            }
-        });
+
+                if (item.text) {
+                    const lowerText = item.text.toLowerCase();
+
+                    if (/skills|technical skills|core competencies|technologies|tools/.test(lowerText)) {
+                        currentSection = 'skills';
+                    } else if (/experience|work experience|professional experience/.test(lowerText)) {
+                        currentSection = 'experience';
+                    }
+
+                    if (currentSection === 'skills' && !/skills|technical skills/.test(lowerText)) {
+                        const words = item.text
+                            .split(/[\s,;•]+/)
+                            .map(w => w.trim())
+                            .filter(Boolean);
+
+                        words.forEach(word => buffer.push(word));
+                    } else if (currentSection === 'experience' && !/experience/.test(lowerText)) {
+                        extractedExperience += item.text + ' ';
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Unexpected error in parseResume:", error);
+            return reject("Unexpected error while parsing resume");
+        }
     });
 };
 

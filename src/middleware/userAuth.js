@@ -1,38 +1,23 @@
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 
-function authenticateUser(req, res, next) {
+const JWT_SECRET = process.env.SKT || "your_jwt_secret";
 
+// Middleware to check if user has a valid token
+const authenticateUser = (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
-  const token = req.cookies.token ||  req.headers.authorization?.split(' ')[1];;
-
-
-//   const token = req.headers.authorization;
-
-  
- 
- 
   if (!token) {
-   
-    return res.status(401).json({
-      succes:false,
-      message:"Unauthorized"
-    })
+    return res.status(401).json({ success: false, message: "Unauthorized. No token provided." });
   }
 
-
-  jwt.verify(token, process.env.SKT, (err, user) => {
-    
-
-    if (err) return res.status(403).json({
-      succes:false,
-      message:"Token expired"
-    })
-    
-    req.user = user;
-
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: "Invalid or expired token." });
+    }
+    req.user = decoded; // decoded contains { id, role }
     next();
   });
-}
+};
 
 export default authenticateUser;

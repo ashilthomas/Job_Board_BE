@@ -8,6 +8,7 @@ import jobRoute from "./src/routes/jobRoute.js"
 import { fileURLToPath } from "url";
 import path from "path"
 import applicationRoute from "./src/routes/applicationRoute.js"
+
 const app = express()
 
 
@@ -20,6 +21,7 @@ const __dirname = path.dirname(__filename);
 // app.use('src/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/uploads", express.static(path.join(__dirname, "src/uploads")));
 
+console.log("htiitng");
 
 
 

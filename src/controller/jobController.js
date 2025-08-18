@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import JobModel from "../model/jobModel.js";
 import UserModel from "../model/userModel.js";
 import uploadToCloudinary from "../config/cloudinaryServices.js";
-import e from "cors";
+
 import ApplicationModel from "../model/applicationModel.js";
 
 
@@ -59,21 +59,21 @@ export const createJob = async (req, res) => {
 };
 
 export const getJobDetails= async (req, res) => {
-    const id = req.params.id;
-    console.log(id);
+    const jobId = req.params.jobId;
+    
     
 
-    // Validate if the id is a valid MongoDB ObjectId
-    // if (!mongoose.Types.ObjectId.isValid(id)) {
-    //     return res.status(400).json({
-    //         success: false,
-    //         message: "Invalid job ID"
-    //     });
-    // }
+   // Check if jobId exists
+  if (!jobId) {
+    return res.status(400).json({ success: false, message: "Job ID is missing" });
+  }
+
 
     try {
+             
         // Fetch the job from the database
-        const job = await JobModel.findById(id).populate('postedBy');
+        const job = await JobModel.findById(jobId).populate('postedBy');
+     
 
         // If the job is not found, return a 404 error
         if (!job) {
