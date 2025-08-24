@@ -18,8 +18,8 @@ const __dirname = path.dirname(__filename);
 
 
 
-// app.use("/uploads", express.static(path.join(__dirname, "src/uploads")));
-app.use("/uploads", express.static(path.join(process.cwd(), "src/uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "src/uploads")));
+
 
 
 

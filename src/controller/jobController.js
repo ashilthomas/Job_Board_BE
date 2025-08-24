@@ -170,44 +170,63 @@ export const updateJob = async (req, res) => {
 // search functionalilty
 
 export const searchJobs = async (req, res) => {
-    console.log("hitting");
-    
-    const {  page = 1, limit = 10 } = req.query;
-    
-    const { keyword } = req.query;
-    console.log(keyword);
-    
+  console.log("hitting");
 
-    try {
-        // Validate that a keyword is provided
-      
+  const { page = 1, limit = 10, keyword, jobType, experienceLevel, location } = req.query;
 
-        // Build a search query
-        const query = {
-            $or: [
-                { title: { $regex: keyword, $options: 'i' } }, // Matches title
-               
-            ],
-        };
+  try {
+    // Build search query dynamically
+    let query = {};
 
-        // Execute the query
-        const jobs = await JobModel.find(query)
-        .skip((page - 1) * limit) // Skip jobs based on current page
-        .limit(parseInt(limit)); 
-        const totalJobs = await JobModel.countDocuments(query);
-
-        // Return search results
-        res.status(200).json({
-            success:true,
-            message: 'Search results retrieved successfully.',
-            jobs,
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(totalJobs / limit),
-        });
-    } catch (error) {
-        res.status(500).json({ success:false, message: 'Error searching for jobs.', error });
+    // Keyword filter
+    if (keyword) {
+      query.$or = [
+        { title: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } }, // optional: search in description too
+      ];
     }
+
+    // JobType filter
+    if (jobType) {
+      query.jobType = jobType; // must match exact values stored in DB
+    }
+
+    // ExperienceLevel filter
+    if (experienceLevel) {
+      query.experienceLevel = experienceLevel;
+    }
+
+    // Location filter
+    if (location) {
+      query.location = location;
+    }
+
+    console.log("Query:", query);
+
+    // Fetch jobs
+    const jobs = await JobModel.find(query)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const totalJobs = await JobModel.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      message: "Search results retrieved successfully.",
+      jobs,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalJobs / limit),
+    });
+  } catch (error) {
+    console.error("Error searching jobs:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error searching for jobs.",
+      error,
+    });
+  }
 };
+
 
 // jobReconmendetion
 const vectorize = (skillsArray, referenceSkills) => {
