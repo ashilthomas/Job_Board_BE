@@ -59,15 +59,15 @@ import path from 'path'
 export const applyForJob = async (req, res) => {
     const { id } = req.params; // Job ID
     const userId = req.user.id; // Extracted from JWT middleware
-    let resumePath = req.file?.path;
-console.log(resumePath);
+   
+    const file = req.file;
 
-    if (!resumePath) {
-        return res.status(400).json({ success: false, message: 'Resume file is required.' });
+    if (!file) {
+      return res.status(400).json({ success: false, message: "Resume is required" });
     }
 
-    resumePath = resumePath.replace(/\\/g, "/");
-    const resumeFilename = path.basename(resumePath);
+    // Save file path in database
+    const resumeUrl = `/uploads/${file.filename}`;
 
     try {
         // Step 1: Check if the job exists
@@ -83,16 +83,16 @@ console.log(resumePath);
         }
 
         // Step 3: Parse resume for skills and experience
-        const { extractedSkills, extractedExperience } = await parseResume(resumePath);
+        // const { extractedSkills, extractedExperience } = await parseResume(resumeUrl); // use resumeUrl
 
         // Step 4: Update user's profile
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
             {
                 $set: {
-                    skills: extractedSkills,
-                    experience: extractedExperience,
-                    resume: resumeFilename,
+                    // skills: extractedSkills,
+                    // experience: extractedExperience,
+                    resume: file.filename, // ✅ store the uploaded file name
                 },
             },
             { new: true }
@@ -102,7 +102,7 @@ console.log(resumePath);
         const application = new ApplicationModel({
             job: id,
             applicant: userId,
-            resume: resumeFilename,
+            resume: file.filename, // ✅ use file.filename
         });
 
         await application.save();
@@ -118,6 +118,7 @@ console.log(resumePath);
         res.status(500).json({ success: false, message: 'Failed to apply for the job.', error });
     }
 };
+
 const parseResume = (resumePath) => {
     return new Promise((resolve, reject) => {
         let extractedSkills = new Set();
@@ -302,3 +303,13 @@ export const updateApplicationStatus = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+
+ // let resumePath = req.file?.path;
+
+    // if (!resumePath) {
+    //     return res.status(400).json({ success: false, message: 'Resume file is required.' });
+    // }
+
+    // resumePath = resumePath.replace(/\\/g, "/");
+    // const resumeFilename = path.basename(resumePath);
