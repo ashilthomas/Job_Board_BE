@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
 // app.use('src/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/uploads", express.static(path.join(__dirname, "src/uploads")));
 
-console.log("htiitng");
+
 
 
 

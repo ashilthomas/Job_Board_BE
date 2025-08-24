@@ -21,7 +21,7 @@ const uploadToCloudinary = async (filePath) => {
     const result = await cloudinary.uploader.upload(filePath);
     return result;
   } catch (error) {
-    throw new Error('Cloudinary upload failed: ' + error.message);
+    throw new Error("Cloudinary upload failed: " + error.message);
   }
 };
 

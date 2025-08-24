@@ -60,6 +60,7 @@ export const applyForJob = async (req, res) => {
     const { id } = req.params; // Job ID
     const userId = req.user.id; // Extracted from JWT middleware
     let resumePath = req.file?.path;
+console.log(resumePath);
 
     if (!resumePath) {
         return res.status(400).json({ success: false, message: 'Resume file is required.' });

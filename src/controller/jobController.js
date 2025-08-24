@@ -22,11 +22,19 @@ export const createJob = async (req, res) => {
 
     } = req.body;
 
+
+
     // Parse the stringified salary into an object
     const salary = JSON.parse(salaryString);
-    const filePath = req.file.path
-    const result = await uploadToCloudinary(filePath);
+    const filePath = req.file?.path; 
+    
 
+    // if using diskStorage
+  let imageUrl = null;
+    if (filePath) {
+      const result = await uploadToCloudinary(req.file.path);
+      imageUrl = result.secure_url;
+    }
     try {
         // Create a new job document
         const newJob = new JobModel({
@@ -38,7 +46,7 @@ export const createJob = async (req, res) => {
             experienceLevel,
             jobType,
             postedBy: userId,
-            image:result.url // Reference to the employer
+            image: imageUrl, // Reference to the employer
         });
 
         // Save the job to the database
@@ -269,6 +277,10 @@ export const recommendJobs = async (req, res) => {
 
 export const employerJob = async (req, res) => {
     const { id } = req.user;
+    console.log(id);
+    
+    console.log("hitting empluer job");
+    
     
     try {
         const empJobs = await JobModel.find({ postedBy: id });
@@ -276,7 +288,7 @@ export const employerJob = async (req, res) => {
         // Always return an array, even if it's empty
         return res.json({
             success: true,
-            empJobs: empJobs.length > 0 ? empJobs : []
+            Jobs: empJobs.length > 0 ? empJobs : []
         });
 
     } catch (error) {

@@ -3,6 +3,9 @@ import UserModel from "../model/userModel.js";
 import authenticateUser from "./userAuth.js";
 
 const authenticateEmployer = async (req, res, next) => {
+
+  console.log("authenticateEmployer");
+  
   // First validate token
   authenticateUser(req, res, async (err) => {
     if (err) return; // authenticateUser already handled errors

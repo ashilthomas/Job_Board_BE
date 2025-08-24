@@ -7,7 +7,7 @@ const applicationRoute = express.Router()
 
 applicationRoute.post("/apply/:id",upload.single("resume"),authenticateUser,applyForJob)
 applicationRoute.get("/myjobs",authenticateUser,myAppliedJobs)
-applicationRoute.get("/getApplicationForEmployer/:jobId", authenticateEmployer,getApplicantsForJob);
+applicationRoute.get("/getApplicationForEmployer/:jobId",authenticateEmployer,getApplicantsForJob);
 applicationRoute.put("/updateStatus/:applicationId", authenticateEmployer,updateApplicationStatus);
 
 

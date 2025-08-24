@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 import "dotenv/config"
-console.log(process.env.SKT);
+
 
 const getToken = (req, res) => {
     try {
