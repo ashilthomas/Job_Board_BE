@@ -57,6 +57,8 @@ import path from 'path'
 // };
 
 export const applyForJob = async (req, res) => {
+    console.log("hitting");
+    
     const { id } = req.params; // Job ID
     const userId = req.user.id; // Extracted from JWT middleware
    
